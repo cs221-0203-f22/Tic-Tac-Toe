@@ -2,294 +2,243 @@
 #include <string.h>
 #include <stdlib.h>
 
-void printBoard(char **storeVals) {
+typedef int board [9];
+char player = 'X';
+char opponent = 'O';
 
-	printf(" %c | %c | %c\n", *storeVals[0], *storeVals[1], *storeVals[2]);
-	printf("---+---+---\n");
-	printf(" %c | %c | %c\n", *storeVals[3], *storeVals[4], *storeVals[5]);
-	printf("---+---+---\n");
-	printf(" %c | %c | %c\n", *storeVals[6], *storeVals[7], *storeVals[8]);
-	
+void printBoard(board b) {
+
+        printf(" %c | %c | %c\n", b[0], b[1], b[2]);
+        printf("---+---+---\n");
+        printf(" %c | %c | %c\n", b[3], b[4], b[5]);
+        printf("---+---+---\n");
+        printf(" %c | %c | %c\n", b[6], b[7], b[8]);
+
 }
 
-int checkWin(char **storeVals, char *player) {//player paramater to determine if the opponents win is checked vs player
+int checkWin(board b, char player) {//player paramater to determine if the opponents win is checked vs player
 
 	int win = 1;
 	
-	if(strcmp(storeVals[0], player) == 0 && strcmp(storeVals[1], player) == 0  && strcmp(storeVals[2], player)==0) {//row 1 horz check
+	if(b[0] == player && b[1] == player && b[2] == player) {//row 1 horz check
 		win = 0;
 	}
-	if(strcmp(storeVals[3],  player) == 0 && strcmp(storeVals[4],  player) == 0  && strcmp(storeVals[5], player)==0) {//row 2  horz check
+	if(b[3] == player && b[4] == player && b[5] == player) {//row 2 horz check
 		win = 0;
 	}
-	if(strcmp(storeVals[6],  player) == 0 && strcmp(storeVals[7],  player) == 0  && strcmp(storeVals[8], player)==0) {//row 3  horz check
-		win = 0;
-	}
-
-	if(strcmp(storeVals[0], player) == 0 && strcmp(storeVals[3], player) == 0  && strcmp(storeVals[6], player)==0) {//row 1 vert check
-		win = 0;
-	}
-	if(strcmp(storeVals[1],  player) == 0 && strcmp(storeVals[4],  player) == 0  && strcmp(storeVals[7], player)==0) {//row 2  vert check
-		win = 0;
-	}
-	if(strcmp(storeVals[2],  player) == 0 && strcmp(storeVals[5],  player) == 0  && strcmp(storeVals[8], player)==0) {//row 3  vert check
+	if(b[6] == player && b[7] == player && b[8] == player) {//row 3 horz check
 		win = 0;
 	}
 
-	if(strcmp(storeVals[0], player) == 0 && strcmp(storeVals[4], player) == 0  && strcmp(storeVals[8], player)==0) {//diagonal checks
+	if(b[0] == player && b[3] == player && b[6] == player) {//row 1 vert check
 		win = 0;
 	}
-	if(strcmp(storeVals[2],  player) == 0 && strcmp(storeVals[4],  player) == 0  && strcmp(storeVals[6], player)==0) {
+	if(b[1] == player && b[4] == player && b[7] == player) {//row 2 vert check
+		win = 0;
+	}
+	if(b[2] == player && b[5] == player && b[8] == player) {//row 3 vert check
+		win = 0;
+	}
+
+	if(b[0] == player && b[4] == player && b[8] == player) {//diag check
+		win = 0;
+	}
+	if(b[2] == player && b[4] == player && b[6] == player) {//anti diagonal check
 		win = 0;
 	}
 	
 	return win;
 }
 
-int isLegal(int playerMove, char **storeVals) {
+int fullBoard(board b) {
+    
+    int isFull = 0;
 
-	int legality = 0; //variable to store whether or not the move is valid
+    for(int i = 0; i < 9; i++) {
+        if(b[i] == '_') { //if any blank space is found, break loop
+            isFull = 1;
+            break;
+        }
+    }
 
-	if(playerMove == -1) {
+    return isFull;
+
+}
+
+int minimax(board b, char p, int depth) {
+
+    int score;
+    if(checkWin(b, 'X') == 0) { //X wins case
+        score = 10 - depth;
+        return score;
+    }
+    else if(checkWin(b, 'O') == 0) {//O wins case
+        score = -10 + depth;
+        return score;
+    }
+    else if(fullBoard(b) == 0) { //if neither player wins, check if board is full
+        score = 0;
+        return score;
+    }
+
+    if (p == 'X') { //maximizer
+        score = -100;
+        for(int i = 0; i < 9; i++) {
+            if(b[i] == '_') { //iterate through the board values and check for empty space
+                b[i] = p;
+                int tmp = minimax(b, 'O', depth + 1); //each time minimax is called, increase depth
+                if(tmp > score) { //find the highest value
+                    score = tmp;
+                }
+
+                b[i] = '_';
+            }
+        }
+    }
+
+    else { //minimizer
+        score = 100;
+        for(int i = 0; i < 9; i++) { 
+            if(b[i] == '_') {
+                b[i] = p;
+                int tmp = minimax(b, 'X', depth + 1);
+                if(tmp < score) { //find lowest value
+                    score = tmp; //store lowest value
+                }
+
+                b[i] = '_';
+            }
+        }
+    }
+    return score;
+}
+
+int findBestMove(board b, char p) {
+  
+    int score = 100;
+    int rPos = -1; //return position variable
+    for(int i = 0; i < 9; i++) {
+        if(b[i] == '_') { //check if position is empty
+            b[i] = p;
+            int tmp = minimax(b,'X', 0);
+            b[i] = '_'; //clear the position
+
+            if(tmp < score) { //find lowest score, then return position of lowest score
+                score = tmp;
+                rPos = i;
+            }
+        }
+    }
+
+    return rPos;
+}
+
+int isLegal(board b, int pMove) {
+	if(pMove == -1) {
 		return 1;
 	}
-
-	else if(playerMove > 8 || playerMove < 0) { //exception handling
+	else if(pMove > 8 || pMove < 0) {
 		return 1;
 	}
-	
-	else if(strcmp(storeVals[playerMove], "_") == 0 && strcmp(storeVals[playerMove], "O") != 0) { //check that space is blank
-		legality = 0;
+	else if(b[pMove] != '_') { //if not empty space
+		return 1;
 	}
-	else {
-		legality = 1;
-	}
-	return legality;
+	return 0;
 }
 
-int minimax(char **storeVals, char *p, int depth) {
+int runGame(board b) {
 
-	int score=0;
-	char *p1 = "X"; //player 1
-	char *opponent = "O"; // opponent
+	while(fullBoard(b) == 1) { //while fullBoard function returns 1 (not full), keep running game
 
-	if(checkWin(storeVals, p1) == 0 && checkWin(storeVals, opponent) == 0) { //draw case
-		score = 0;
-		return score;
-	}
-	if(checkWin(storeVals, p1) == 0) {//check if X wins
-		score = 10 - depth;
-		return score;
-	}
-	if(checkWin(storeVals, opponent) == 0) {//check if O wins
-		score = -10 + depth;
-		return score;
-	}
-
-	if(strcmp(p, "X")) {
-
-		score = -100; //set a value lower than lowest possible  value
-
-		for(int i = 0; i < 9; i++) { //iterate through all Free positions to place X
-
-			if(strcmp(storeVals[i],"_")) {
-
-			storeVals[i] = p;
-			
-			int tmp = minimax(storeVals, opponent, depth + 1);
-
-			if(tmp > score) {
-				score = tmp;
-			}
-			
-			storeVals[i] = "_";
-			
-			}
-		}
-	}
-
-	else {
-	
-		score = 100;
+		int pMove = -1;
 		
-		for(int i = 0; i < 9; i++) {
-
-			if(strcmp(storeVals[i],"_")) {
-
-				storeVals[i] = p;
-				int tmp = minimax(storeVals, p, depth + 1); //find lowest score
-
-				if(tmp < score) {
-
-					score = tmp;
-				}
-				
-				storeVals[i] = "_";
-		}
-	}
-
-	}
-	return score;
-
-	
-}
-
-void findBestMove(char **storeVals, char *player, int *position) {
-
-	char *opponent = "O";
-	
-	int score = 100;
-
-	for(int i = 0; i < 9; i++) { //iterate through all Free positions to place X
-
-		if(strcmp(storeVals[i],"_")) {
-
-		storeVals[i] = opponent;
-		int tmp = minimax(storeVals,player, 0);
-		storeVals[i] = "_";
-
-		if(tmp < score) {
-			score = tmp;
-			*position = i;
-		}
+		printBoard(b); //display board each time runGame loops
 		
-	}
-}
+		if(checkWin(b, 'X') == 0) {
+			printf("X Wins\n");
+			return 0;
+		}
+		else if(checkWin(b, 'O') == 0) {
+			printf("O Wins\n");
+			return 0;
+		}
 
-	switch(*position) { //use switch cases to print the correct grid positions of best possible value
-		case 0:
-			printf("O: 0 0");
-			break;
-		case 1:
-			printf("O: 0 1");
-			break;
-		case 2:
-			printf("O: 0 2");
-			break;
-		case 3:
-			printf("O: 1 0");
-			break;
-		case 4:
-			printf("O: 1 1");
-			break;
-		case 5:
-			printf("O: 1 2");
-			break;
-		case 6:
-			printf("O: 2 0");
-			break;
-		case 7:
-			printf("O: 2 1");
-			break;
-		case 8:
-			printf("O: 2 2");
-			break;
+		while(isLegal(b, pMove) != 0) { //for user input, keep looping until a valid input is put
+			printf("Your Move (X): ");
+			scanf("%d", &pMove);
+		}
+
+		b[pMove] = 'X'; //add X to board;
+
+		pMove = findBestMove(b, 'O'); //get the best O value for this board
+		
+		b[pMove] = 'O'; //add O value to board;
 		
 	}
-}
 
-int runGame(char **storeVals) {
-
-	char *player = "X";
-	char *opponent = "O";
-	
-	int playerWin = checkWin(storeVals, player); //check if the player or opponent has a win
-	int opponentWin = checkWin(storeVals, opponent);
-
-	if(playerWin == 0 && opponentWin == 0) {
-		printf("Draw\n");
-		return 1;
-	}
-
-	if(playerWin == 0) {
-		printf("X Wins\n");
-		return 1;
-	}
-
-	if(opponentWin == 0) {
-		printf("O Wins\n");
-		return 1;
-	}
-	
-	int playerMove = -1;
-	int opponentMove = -1;
-	
-	while(isLegal(playerMove, storeVals) != 0) { //loop until the user inputs a valid position
-		printf("Your Move (X): ");
-		scanf("%d", &playerMove);
-		}
-	
-	storeVals[playerMove] = "X";
-	printBoard(storeVals);
-	
-	//opponent finds best movein minimax, store it in storeVals, then printboard
-
-	if(strcmp(storeVals[0],"_") != 0  && strcmp(storeVals[1],"_") != 0  && strcmp(storeVals[2],"_") != 0  && strcmp(storeVals[3],"_") != 0  && strcmp(storeVals[4],"_") != 0  && strcmp(storeVals[5],"_") != 0  && strcmp(storeVals[6],"_") != 0  && strcmp(storeVals[7],"_") != 0  && strcmp(storeVals[8],"_") != 0) {
-		return 1;		
-}
-	while(isLegal(opponentMove, storeVals) != 0) { //loop until the user inputs a valid position
-		printf("Your Move (X): ");
-		scanf("%d", &opponentMove);
-		}
-
-	 storeVals[opponentMove] = "O";
-	 printBoard(storeVals);
-
-	if(strcmp(storeVals[0],"_") != 0  && strcmp(storeVals[1],"_") != 0  && strcmp(storeVals[2],"_") != 0  && strcmp(storeVals[3],"_") != 0  && strcmp(storeVals[4],"_") != 0  && strcmp(storeVals[5],"_") != 0  && strcmp(storeVals[6],"_") != 0  && strcmp(storeVals[7],"_") != 0  && strcmp(storeVals[8],"_") != 0) {
-		return 1;		
-}
+	printf("Draw");
 	return 0;
 	
 }
 
 int main(int argc, char *argv[]) {
 
-	char *player = "X";
-	int position = -1;
-	
-	 if (argc > 10) { //verify input
+    board b;
 
+	if(argc > 10) {
 		printf("invalid input: too many values");
-		
-	 }  else if (argc > 2) { //find the next best value
+	}  
+	  
+	else if(argc > 2) { //case to give the best possible opponent move
 
-		char *storeVals[9]; //array to store board values
-
-		for (int i = 1; i < argc; i++) { //feed values into storeVals array
-
-			storeVals[i - 1] = argv[i];
-		}
-
-		printBoard(storeVals);
-		findBestMove(storeVals, "X", &position);
-	
-	 } else if (argc == 1) { //play against minimax algorithm
-		
-		int isRunning = 0;
-		char *storeVals[9]; //array to store board values
-		
-		for (int i = 0; i < 9; i++) { //feed values into storeVals array
-
-			storeVals[i] = "_";
-		}
-		printBoard(storeVals); //display initial board
-
-		while(isRunning == 0) {
-
-			if(runGame(storeVals) == 1) { //launch the game and run until complete
-
-				printf("Game end\n");
-				isRunning = 1;
-				return 1;
-			}
-		}
-
-
+	for(int i = 1; i < argc; i++) {
+		b[i - 1] = *argv[i];
 	}
-	return 0;
+	
+    printBoard(b);
+    int bestPos = findBestMove(b,opponent);
+
+    switch(bestPos) { //switch cases to convert the 1D array values to grid positions, matching test case output
+        case 0:
+			printf("O: 0 0\n");
+			break;
+		case 1:
+			printf("O: 0 1\n");
+			break;
+		case 2:
+			printf("O: 0 2\n");
+			break;
+		case 3:
+			printf("O: 1 0\n");
+			break;
+		case 4:
+			printf("O: 1 1\n");
+			break;
+		case 5:
+			printf("O: 1 2\n");
+			break;
+		case 6:
+			printf("O: 2 0\n");
+			break;
+		case 7:
+			printf("O: 2 1\n");
+			break;
+		case 8:
+			printf("O: 2 2\n");
+			break;
+    }
+    }
+
+    else if(argc == 1) { //case to play full game
+
+    	for (int i = 0; i < 9; i++) { //feed values into storeVals array
+			b[i] = '_';
+		}
+
+		runGame(b);
+    	
+    }
+    
+    return 0;
+
 }
-
-
-
-
-
