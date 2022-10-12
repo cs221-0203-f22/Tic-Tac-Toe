@@ -69,7 +69,7 @@ int isLegal(int playerMove, char **storeVals) {
 
 int minimax(char **storeVals, char *p, int depth) {
 
-	int score;
+	int score=0;
 	char *p1 = "X"; //player 1
 	char *opponent = "O"; // opponent
 
@@ -118,16 +118,20 @@ int minimax(char **storeVals, char *p, int depth) {
 
 				storeVals[i] = p;
 				int tmp = minimax(storeVals, p, depth + 1); //find lowest score
+
 				if(tmp < score) {
+
 					score = tmp;
 				}
+				
 				storeVals[i] = "_";
 		}
 	}
 
+	}
 	return score;
 
-}
+	
 }
 
 void findBestMove(char **storeVals, char *player, int *position) {
@@ -257,7 +261,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		printBoard(storeVals);
-		findBestMove(storeVals, player, &position);
+		findBestMove(storeVals, "X", &position);
 	
 	 } else if (argc == 1) { //play against minimax algorithm
 		
